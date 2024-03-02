@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app_todo_c10_sun11/dialog_utils.dart';
 import 'package:flutter_app_todo_c10_sun11/firebase_utils.dart';
 import 'package:flutter_app_todo_c10_sun11/model/task.dart';
+import 'package:flutter_app_todo_c10_sun11/providers/auth_provider.dart';
 import 'package:flutter_app_todo_c10_sun11/providers/list_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -115,10 +117,20 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
     if (formKey.currentState?.validate() == true) {
       Task task =
           Task(title: title, description: description, dateTime: selectedDate);
-      FirebaseUtils.addTaskToFireStore(task)
-          .timeout(Duration(milliseconds: 500), onTimeout: () {
+      var authProvider = Provider.of<AuthProviders>(context, listen: false);
+      DialogUtils.showLoading(context: context, message: 'Loading...');
+      FirebaseUtils.addTaskToFireStore(task, authProvider.currentUser!.id!)
+          .then((value) {
+        // alert dialog
+        Navigator.pop(context);
+        DialogUtils.hideLoading(context);
+        DialogUtils.showMessage(
+            context: context, message: 'Task added Successfully');
         print('task added successfully');
-        listProvider.getAllTasksFromFireStore();
+        listProvider.getAllTasksFromFireStore(authProvider.currentUser!.id!);
+      }).timeout(Duration(milliseconds: 500), onTimeout: () {
+        print('task added successfully');
+        listProvider.getAllTasksFromFireStore(authProvider.currentUser!.id!);
         Navigator.pop(context);
 
         /// alert dialog , toast , snackbar
